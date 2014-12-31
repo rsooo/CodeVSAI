@@ -16,6 +16,10 @@ case class FieldUnit(id : Int, y : Int, x : Int, hp : Int, unitType: UNIT_TYPE, 
     id + " " + order.getVal
   }
 
+  def setCommand(_command: Command) = {
+    command.changeCommand
+    command = _command
+  }
 }
 
 

@@ -107,8 +107,10 @@ object Main extends App{
         field.opUnitMap = newOpUnitMap
 
     field.resNum = in.resNum
+//    System.err.println(in.resList)
     for(resData <- in.resList){
       field.cells(resData._1)(resData._2).resource = true
+      field.resSet.add((resData._1, resData._2))
     }
     field.currentResource = in.currentResource
 
