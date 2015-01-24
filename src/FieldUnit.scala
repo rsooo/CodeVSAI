@@ -17,7 +17,7 @@ case class FieldUnit(id : Int, y : Int, x : Int, hp : Int, unitType: UNIT_TYPE, 
   }
 
   def setCommand(_command: Command) = {
-    command.changeCommand
+    command.cancelCommand
     command = _command
   }
 }

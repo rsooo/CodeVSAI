@@ -50,7 +50,10 @@ object Main extends App{
     if(in.currentTurn == 0) {
       System.err.println("Stage: " + in.currentStage)
       field = new FieldInfo
+      unitAI.init
     }
+    field.currentTurn = in.currentTurn
+
     for (cell1 <- field.cells){
       cell1.foreach(cell => {cell.myUnits.clear();cell.opUnits.clear()})
     }
@@ -77,6 +80,12 @@ object Main extends App{
       }
     }
 
+    //死んだユニットを取得
+    val deadUnits = field.myUnitMap.filterKeys(key => !newMyUnitMap.contains(key)).values
+    for( unit <- deadUnits){
+      unit.command.cancelCommand
+//      System.err.println(unit.id + "is dead")
+    }
 
       //update new unitMap
       field.myUnitMap = newMyUnitMap

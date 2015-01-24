@@ -1,0 +1,14 @@
+userId=rso
+bgmMuteChallenge=false
+bgmMuteVersus=false
+bgmMuteRanking=false
+bgmMuteReplay=false
+bgmVolume=100
+rendererView=true
+rendererBulr=true
+rendererGrid=true
+rendererCharaNum=true
+rendererAnimation=true
+loop=false
+debugChallenge=false
+debugVersus=false

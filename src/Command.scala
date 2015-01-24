@@ -5,7 +5,7 @@
 trait Command {
   def generateOrder() : ORDER
   def isCommandFinished() : Boolean
-  def changeCommand : Unit
+  def cancelCommand : Unit
 
 
 }
@@ -36,7 +36,7 @@ class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) e
     if (self.x == xdest && self.y == ydest) true else false
   }
 
-  override def changeCommand: Unit = {
+  override def cancelCommand: Unit = {
     field.cells(ydest)(xdest).myUnitsGoing.remove(id)
   }
 }
@@ -66,7 +66,7 @@ class EarnResourceCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int)
     false
   }
 
-  override def changeCommand: Unit = ()
+  override def cancelCommand: Unit = ()
 
 }
 
@@ -74,7 +74,7 @@ class EarnResourceCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int)
 object FreeCommand extends Command {
   override def generateOrder(): ORDER = ORDER.NONE
   override def isCommandFinished(): Boolean = false
-  override def changeCommand: Unit = ()
+  override def cancelCommand: Unit = ()
 
 }
 //
@@ -84,11 +84,23 @@ object FreeCommand extends Command {
 //  override def isCommandFinished(): Boolean = false
 //}
 
+/*
 class KeepGenerateCommand(field : FieldInfo, order : ORDER, threshold : Int ) extends Command {
   override def generateOrder(): ORDER = {
     if(field.currentResource >= threshold) order else ORDER.NONE
   }
   override def isCommandFinished(): Boolean = false
-  override def changeCommand: Unit = ()
+  override def cancelCommand: Unit = ()
+}
+*/
+
+class KeepGenerateCommand(field : FieldInfo, order : ORDER, condition : (FieldInfo) => Boolean , count : Int) extends Command {
+  var c = count;
+  override def generateOrder(): ORDER = {
+    if(condition(field)){ c = c-1;order} else ORDER.NONE
+  }
+  override def isCommandFinished(): Boolean = c <= 0
+  override def cancelCommand: Unit = ()
 
 }
+
