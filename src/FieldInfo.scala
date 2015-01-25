@@ -8,6 +8,8 @@ class FieldInfo {
   var currentTurn : Int = 0
   var myUnitMap = scala.collection.mutable.Map[Int, FieldUnit]()
   var opUnitMap = scala.collection.mutable.Map[Int, FieldUnit]()
+  var opBarrackSet = scala.collection.mutable.Set[(Int,Int)]()
+
   //Field はf(y)(x)の形でアクセスする
   var cells = Array.tabulate[Cell](100, 100)((y,x) => new Cell(y,x))
   var remainingTime : Int = 0

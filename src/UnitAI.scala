@@ -5,6 +5,8 @@ class UnitAI {
   var searchx = 0
   var searchy = 0
 
+  var searchOpx  = 0
+
   def init = {
     searchx = 0
     searchy = 0
@@ -21,14 +23,19 @@ class UnitAI {
         case UNIT_TYPE.WORKER if unit.command == FreeCommand =>
             unit.setCommand(workerCommand(field, unit))
         case UNIT_TYPE.CASTLE if unit.command == FreeCommand => unit.setCommand(new KeepGenerateCommand(field, ORDER.C_WORKER, (f:FieldInfo) =>
-        { if(f.currentTurn > 50 && f.countUnitInField(UNIT_TYPE.BARRACK) < 1 && f.currentResource < 500)  false
+        { if(f.currentResource >= 540) true
+          else if(f.currentTurn > 50 && f.countUnitInField(UNIT_TYPE.BARRACK) < 1 && f.currentResource < 500)  false
           else if(f.currentTurn > 100 && field.workerEnough) false
           else f.currentResource > 40}, 100000
         ))
-        case UNIT_TYPE.BARRACK => unit.setCommand(new KeepGenerateCommand(field, ORDER.C_KNIGHT, (f:FieldInfo) =>
+        case UNIT_TYPE.BARRACK => unit.setCommand(new KeepMultiGenerateCommand(field, (f:FieldInfo) =>
         {
-                f.currentResource > 100}, 100000
+          if(f.currentTurn % 3 == 0 && f.currentResource > 20) ORDER.C_KNIGHT
+          else if(f.currentResource > 60) ORDER.C_ASSASSIN
+          else ORDER.NONE}, 100000
         ))
+        case UNIT_TYPE.ASSASSIN if unit.command == FreeCommand => unit.setCommand(armyCommand(field, unit))
+        case UNIT_TYPE.KNIGHT if unit.command == FreeCommand => unit.setCommand(armyExplorer(field, unit))
 
         case _ =>
       }
@@ -37,6 +44,38 @@ class UnitAI {
       if (unit.command.isCommandFinished()) unit.setCommand(FreeCommand)
     }
 
+  }
+
+  def armyCommand(f : FieldInfo, unit : FieldUnit) : Command = {
+    //まずは全力で拠点をつぶしに行く
+    for(opBarrack <- f.opBarrackSet){
+      return new SimpleMoveCommand(f, unit.id, opBarrack._1, opBarrack._2)
+    }
+
+    if(f.opCastle != null)
+      return new SimpleMoveCommand(f, unit.id, f.opCastle._1, f.opCastle._2)
+      else{
+      searchOpx = (searchOpx + 4) % 40
+      return new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchOpx + 60 else searchOpx)
+    }
+
+  }
+
+  def armyExplorer(f : FieldInfo, unit : FieldUnit) : Command = {
+    searchx = (searchx + 4) % 100
+    if(unit.y == 0 || unit.y == 99){
+
+      //capture empty resource
+      for(resPoint <- f.resSet) {
+        val workingCount = f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
+        val defendingCount =  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT) + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT)
+        if(workingCount < 5 && defendingCount < 5){
+          return new DefendeResourceCommand(f, unit.id, resPoint._1, resPoint._2)
+        }
+      }
+       return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100))
+    }
+    new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99))
   }
 
   def workerCommand(f : FieldInfo, unit : FieldUnit) : Command = {
@@ -80,14 +119,14 @@ class UnitAI {
   def workerResourceAllocate(f : FieldInfo) : Boolean = {
     for(resPoint <- f.resSet) {
       val workingCount = f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER) + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
-      System.err.println(f.currentTurn+ ": " + resPoint._1 + ". "+ resPoint._2 + ", count:" +  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER) + "," + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER))
+//      System.err.println(f.currentTurn+ ": " + resPoint._1 + ". "+ resPoint._2 + ", count:" +  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER) + "," + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER))
       if(workingCount < 5){
         val unitList = f.findUnit(resPoint._1, resPoint._2, 5 - workingCount, UNIT_TYPE.WORKER)
         for(unit <- unitList){
           unit.setCommand(new EarnResourceCommand(f, unit.id, resPoint._1, resPoint._2))
         }
         if(unitList.size < 5 - workingCount){
-          System.err.println("worker lack")
+//          System.err.println("worker lack")
           return false
         }
       }

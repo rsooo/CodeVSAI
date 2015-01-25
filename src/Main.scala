@@ -94,7 +94,10 @@ object Main extends App{
       var newOpUnitMap = scala.collection.mutable.Map[Int,FieldUnit]()
 
 
-      for(unitData <- in.opUnitList) {
+
+    var newOpBarrackSet = scala.collection.mutable.Set[(Int,Int)]()
+
+    for(unitData <- in.opUnitList) {
 //        newOpUnitMap += (field.opUnitMap.get(unitData._1) match {
 //          case Some(v) => (unitData._1 -> v)
 //          case _ => (unitData._1 -> new FieldUnit(unitData._1, unitData._2, unitData._3, unitData._4, UNIT_TYPE.getUnitType(unitData._5)))
@@ -109,10 +112,21 @@ object Main extends App{
 
         unit.unitType match {
           case UNIT_TYPE.CASTLE => field.opCastle = (unit.y, unit.x)
+          case UNIT_TYPE.BARRACK => newOpBarrackSet.add(unit.y, unit.x)
           case _ =>
+
         }
       }
-        //update new unitMap
+
+    //既に破壊した敵の拠点がないかチェック
+    for(opBarrack <- field.opBarrackSet){
+      if(field.countUnitInCell(opBarrack._1, opBarrack._2,UNIT_TYPE.ASSASSIN) > 0 && !newOpBarrackSet.exists((point:(Int,Int))  => {point._1 == opBarrack._1 && point._2 == opBarrack._2}))
+        field.opBarrackSet.remove(opBarrack._1, opBarrack._2)
+    }
+    field.opBarrackSet = field.opBarrackSet ++ newOpBarrackSet
+
+
+    //update new unitMap
         field.opUnitMap = newOpUnitMap
 
     field.resNum = in.resNum
