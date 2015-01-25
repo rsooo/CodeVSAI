@@ -75,7 +75,7 @@ class UnitAI {
       }
        return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100))
     }
-    new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99))
+    new SimpleMoveCommand(f, unit.id, if(COMMON.getInt(2) == 0) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99))
   }
 
   def workerCommand(f : FieldInfo, unit : FieldUnit) : Command = {
