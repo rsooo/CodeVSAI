@@ -22,6 +22,8 @@ class FieldInfo {
   var resNum = 0;
   var resSet = scala.collection.mutable.Set[(Int, Int)]()
 
+  //var attackingArmyNum = 50
+
 //  var myBarrackNum : Int = 0
 
   def countUnitOrder() = {
@@ -55,5 +57,9 @@ class FieldInfo {
     val distance: Iterable[(FieldUnit, Int)] = for(unit <- myUnitMap.values if unit.unitType == unitType && !unit.command.isInstanceOf[EarnResourceCommand] && !unit.command.isInstanceOf[KeepGenerateCommand]) yield (unit, COMMON.distance(unit.y, unit.x, fromy, fromx))
     val nearestTupleSeq: Seq[(FieldUnit, Int)] = distance.toSeq.sortWith((t1:(FieldUnit,Int), t2:(FieldUnit, Int)) => {t1._2 < t2._2}).take(num)
     for(nearestTuple <- nearestTupleSeq) yield nearestTuple._1
+  }
+
+  def isInrange(point : (Int, Int)) : Boolean = {
+    point._1 >= 0 && point._1 < 100 && point._2 >= 0 && point._2 < 100
   }
 }

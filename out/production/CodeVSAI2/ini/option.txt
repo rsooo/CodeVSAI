@@ -10,5 +10,5 @@ rendererGrid=true
 rendererCharaNum=true
 rendererAnimation=true
 loop=false
-debugChallenge=false
+debugChallenge=true
 debugVersus=false

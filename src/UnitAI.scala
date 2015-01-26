@@ -40,6 +40,15 @@ class UnitAI {
         case _ =>
       }
 
+      if(isPrepareAttacking(field) && field.opCastle != null){
+        unit.unitType match {
+            //とりあえずdefendeCommandにしている
+          case UNIT_TYPE.ASSASSIN if unit.command.isInstanceOf[DefendeCommand] => unit.setCommand(new DefendeCommand(field, unit.id, field.opCastle._1, field.opCastle._2))
+          case _ =>
+
+        }
+      }
+
       unit.order = unit.command.generateOrder()
       if (unit.command.isCommandFinished()) unit.setCommand(FreeCommand)
     }
@@ -47,19 +56,51 @@ class UnitAI {
   }
 
   def armyCommand(f : FieldInfo, unit : FieldUnit) : Command = {
+    if(f.currentTurn % 4 != 0 || f.opCastle != null) {
+      for (around <- COMMON.Around) {
+        if (!f.isInrange(around._1 + f.myCastle._1, around._2 + f.myCastle._2)) "do nothing"
+        else if (f.countUnitInCell(around._1 + f.myCastle._1, around._2 + f.myCastle._2, UNIT_TYPE.ASSASSIN) + f.countUnitGoingToCell(around._1 + f.myCastle._1, around._2 + f.myCastle._2, UNIT_TYPE.ASSASSIN) < 10) {
+          return new DefendeCommand(f, unit.id, around._1 + f.myCastle._1, around._2 + f.myCastle._2)
+        }
+      }
+    }
     //まずは全力で拠点をつぶしに行く
+    /*
     for(opBarrack <- f.opBarrackSet){
       return new SimpleMoveCommand(f, unit.id, opBarrack._1, opBarrack._2)
     }
+    */
+
+
 
     if(f.opCastle != null)
       return new SimpleMoveCommand(f, unit.id, f.opCastle._1, f.opCastle._2)
       else{
+      val desty = if(unit.y == 0 || f.isTopLeft) 99 else 0
       searchOpx = (searchOpx + 4) % 40
-      return new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchOpx + 60 else searchOpx)
+      return new SimpleMoveCommand(f, unit.id, desty, if(f.isTopLeft) searchOpx + 60 else searchOpx)
+    }
+  }
+
+  def isPrepareAttacking(f : FieldInfo) : Boolean= {
+    var skip : Int = 0
+
+    for(i <- 0 to 4){
+        while(!f.isInrange(COMMON.Around(i + skip)._1 + f.myCastle._1, COMMON.Around(i + skip)._2 + f.myCastle._2)){
+          skip = skip + 1
+        }
+      val diffPoint = COMMON.Around(i + skip)
+      if (f.countUnitInCell(f.myCastle._1 + diffPoint._1, f.myCastle._2 + diffPoint._2, UNIT_TYPE.ASSASSIN) < 10){
+        return false
+      }
+      
     }
 
+    return true
+
+
   }
+
 
   def armyExplorer(f : FieldInfo, unit : FieldUnit) : Command = {
     searchx = (searchx + 4) % 100
