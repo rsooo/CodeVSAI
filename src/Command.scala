@@ -10,7 +10,7 @@ trait Command {
 
 }
 
-class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) extends Command {
+class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int, moveMethod : (Int,Int,Int,Int) => ORDER) extends Command {
 
   field.cells(ydest)(xdest).myUnitsGoing.add(id)
 
@@ -18,7 +18,13 @@ class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) e
     val self = field.myUnitMap.get(id).get
     //    System.err.println("xdest:" + xdest + "selfx " + self.x)
 
-    (xdest - self.x) match {
+    val nextOrder = moveMethod(self.y, self.x, ydest, xdest)
+    if(nextOrder == ORDER.NONE){
+      field.cells(ydest)(xdest).myUnitsGoing.remove(id)
+    }
+    nextOrder
+
+/*    (xdest - self.x) match {
       case m if m > 0 => ORDER.RIGHT
       case m if m < 0 => ORDER.LEFT
       case _ => ydest - self.y match {
@@ -29,6 +35,7 @@ class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) e
           ORDER.NONE
       }
     }
+*/
   }
 
   override def isCommandFinished(): Boolean = {
@@ -40,6 +47,45 @@ class SimpleMoveCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) e
     field.cells(ydest)(xdest).myUnitsGoing.remove(id)
   }
 }
+
+class ExplolerCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) extends Command {
+
+  field.cells(ydest)(xdest).myUnitsGoing.add(id)
+
+  override def generateOrder(): ORDER = {
+    val self = field.myUnitMap.get(id).get
+    //    System.err.println("xdest:" + xdest + "selfx " + self.x)
+
+    val nextOrder = Move.longerFirst(self.y, self.x, ydest, xdest)
+    if(nextOrder == ORDER.NONE){
+      field.cells(ydest)(xdest).myUnitsGoing.remove(id)
+    }
+    nextOrder
+
+    /*    (xdest - self.x) match {
+          case m if m > 0 => ORDER.RIGHT
+          case m if m < 0 => ORDER.LEFT
+          case _ => ydest - self.y match {
+            case n if n > 0 => ORDER.DOWN
+            case n if n < 0 => ORDER.UP
+            case _ =>
+              field.cells(ydest)(xdest).myUnitsGoing.remove(id)
+              ORDER.NONE
+          }
+        }
+    */
+  }
+
+  override def isCommandFinished(): Boolean = {
+    val self = field.myUnitMap.get(id).get
+    if ((self.x == xdest && self.y == ydest) || field.cells(ydest)(xdest).see) true else false
+  }
+
+  override def cancelCommand: Unit = {
+    field.cells(ydest)(xdest).myUnitsGoing.remove(id)
+  }
+}
+
 
 class EarnResourceCommand(field : FieldInfo, id : Int, ydest : Int, xdest : Int) extends Command{
 

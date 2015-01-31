@@ -71,6 +71,7 @@ object Main extends App{
         case _ => throw new IllegalStateException
       }
       field.cells(unit.y)(unit.x).myUnits.add(unit.id)
+      field.recordSight(unit.y, unit.x)
 
       unit.unitType match {
         case UNIT_TYPE.CASTLE =>
@@ -137,6 +138,11 @@ object Main extends App{
     }
     field.currentResource = in.currentResource
 
+    if(field.getSightNum > 7500){
+      field.explolerRequired = false
+    }
+    System.err.println(field.getSightNum)
+
         //      newUnitMap += (unitData._1 -> (if(field.unitMap.contains(unitData._1)) field.unitMap.get(unitData._1) else new FieldUnit(1,1,1,UNIT_TYPE.ASSASSIN)))
 //        newUnitMap += (if(field.unitMap.contains(unitData._1)) (unitData._1 -> field.unitMap.get(unitData._1)) else (unitData._1 -> new FieldUnit(1,1,1,1, UNIT_TYPE.WORKER)))
   }
@@ -151,5 +157,7 @@ object Main extends App{
       if(unit._2.order != ORDER.NONE)println(unit._2.toOrderString())
     }
   }
+
+
 
 }

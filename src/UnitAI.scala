@@ -1,9 +1,12 @@
+//import _root_.COMMON._
+
 /**
  * Created by a-saitoh on 2014/12/28.
  */
 class UnitAI {
   var searchx = 0
   var searchy = 0
+  val KNIGHT_ATTACK_COUNT = 10
 
   var searchOpx  = 0
 
@@ -48,6 +51,20 @@ class UnitAI {
 
         }
       }
+      if(field.countUnitInCell(field.myCastle._1 + 3, field.myCastle._2 , UNIT_TYPE.KNIGHT) > KNIGHT_ATTACK_COUNT){
+        val resPoint = getNearestTargetResource(field, unit)
+        if(resPoint._1 != -1){
+          val workingCount = field.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
+          val defendingCount =  field.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT)
+          if(workingCount < 5 && defendingCount < KNIGHT_ATTACK_COUNT){
+            unit.unitType match {
+              //とりあえずdefendeCommandにしている
+              case UNIT_TYPE.KNIGHT if unit.command.isInstanceOf[DefendeCommand] => unit.setCommand(new DefendeResourceCommand(field, unit.id, resPoint._1, resPoint._2))
+              case _ =>
+            }
+          }
+        }
+      }
 
       unit.order = unit.command.generateOrder()
       if (unit.command.isCommandFinished()) unit.setCommand(FreeCommand)
@@ -74,11 +91,11 @@ class UnitAI {
 
 
     if(f.opCastle != null)
-      return new SimpleMoveCommand(f, unit.id, f.opCastle._1, f.opCastle._2)
+      return new SimpleMoveCommand(f, unit.id, f.opCastle._1, f.opCastle._2, Move.rightFirst)
       else{
       val desty = if(unit.y == 0 || f.isTopLeft) 99 else 0
       searchOpx = (searchOpx + 4) % 40
-      return new SimpleMoveCommand(f, unit.id, desty, if(f.isTopLeft) searchOpx + 60 else searchOpx)
+      return new SimpleMoveCommand(f, unit.id, desty, if(f.isTopLeft) searchOpx + 60 else searchOpx, Move.rightFirst)
     }
   }
 
@@ -104,9 +121,10 @@ class UnitAI {
 
   def armyExplorer(f : FieldInfo, unit : FieldUnit) : Command = {
     searchx = (searchx + 4) % 100
-    if(unit.y == 0 || unit.y == 99){
+/*    if(unit.y == 0 || unit.y == 99){
 
       //capture empty resource
+
       for(resPoint <- f.resSet) {
         val workingCount = f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
         val defendingCount =  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT) + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT)
@@ -114,9 +132,44 @@ class UnitAI {
           return new DefendeResourceCommand(f, unit.id, resPoint._1, resPoint._2)
         }
       }
-       return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100))
+       return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100), Move.longerFirst)
+    }*/
+
+    if(f.explolerRequired && f.currentTurn % 2 == 0) {
+      val expCell = explolerNewCell(f, unit)
+      if (expCell._1 != -1) {
+        return new ExplolerCommand(f, unit.id, expCell._1, expCell._2)
+      }
+    }else{
+      if(unit.y == f.myCastle._1 && unit.x == f.myCastle._2){
+        return new DefendeCommand(f, unit.id, f.myCastle._1 + 3, f.myCastle._2)
+      }else{
+        val resPoint = getNearestTargetResource(f, unit)
+        if(resPoint._1 != -1){
+          val workingCount = f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
+          val defendingCount =  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT) + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT)
+          if(workingCount < 5 && defendingCount < 5){
+            return new DefendeResourceCommand(f, unit.id, resPoint._1, resPoint._2)
+          }
+        }
+      }
     }
-    new SimpleMoveCommand(f, unit.id, if(COMMON.getInt(2) == 0) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99))
+
+
+//    if(f.countUnitInCell(f.myCastle._1 + 3, f.myCastle._2, UNIT_TYPE.KNIGHT) < 10){
+//
+/*      }else{
+        val resPoint = getNearestTargetResource(f, unit)
+        if(resPoint._1 != -1){
+
+        }*/
+
+
+    return new SimpleMoveCommand(f, unit.id, if(COMMON.getInt(2) == 0) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99),Move.longerFirst)
+
+
+    //      return new SimpleMoveCommand(f, unit.id, if(COMMON.getInt(2) == 0) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99),Move.longerFirst)
+
   }
 
   def workerCommand(f : FieldInfo, unit : FieldUnit) : Command = {
@@ -138,7 +191,7 @@ class UnitAI {
 //    }
 
     if(unit.id < 5 || unit.y == 0 || unit.y == 99){
-      return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100))
+      return new SimpleMoveCommand(f, unit.id, COMMON.getInt(100), COMMON.getInt(100),Move.longerFirst)
     }
 
     searchx = (searchx + 4) % 100
@@ -149,7 +202,14 @@ class UnitAI {
     }
 */
 
-    new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99))
+    if(f.explolerRequired){
+      val expCell = explolerNewCell(f,unit)
+      if(expCell._1 != -1){
+        return new ExplolerCommand(f, unit.id, expCell._1, expCell._2)
+      }
+    }
+
+    new SimpleMoveCommand(f, unit.id, if(f.isTopLeft) 99 else 0, if(f.isTopLeft) searchx else math.abs(searchx - 99), Move.longerFirst)
   }
 
   /**
@@ -173,5 +233,41 @@ class UnitAI {
       }
     }
     return true;
+  }
+
+  def explolerNewCell(f : FieldInfo, unit : FieldUnit) = {
+    var shortestDistance = 200
+    var retPoint : (Int, Int) = (-1,-1)
+    for(j <- 0 to 24){
+      for(i <- 0 to 24){
+        val y : Int = j * 4 + 1
+        val x : Int = i * 4 + 1
+//      System.err.println("count" + f.cells(y)(x).see + y + " " + x + " " +  f.countUnitGoingToCell(y,x, UNIT_TYPE.ALL) + " " + COMMON.distance(unit.y,unit.x,y,x))
+      if(!f.cells(y)(x).see && f.countUnitGoingToCell(y,x, UNIT_TYPE.ALL) == 0 && COMMON.distance(unit.y,unit.x,y,x) < shortestDistance){
+          shortestDistance = COMMON.distance(unit.y,unit.x,y,x)
+//          System.err.println("point:" + y + " " + x)
+          retPoint = (y,x)
+
+        }
+      }
+    }
+//    System.err.println("return" + retPoint._1 + " " + retPoint._2)
+    retPoint
+  }
+
+  def getNearestTargetResource(f : FieldInfo, unit : FieldUnit) ={
+    var shortestDistance = 200
+    var retPoint : (Int, Int) = (-1,-1)
+
+    for(resPoint <- f.resSet){
+      val workingCount = f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.WORKER)
+      val defendingCount =  f.countUnitInCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT) + f.countUnitGoingToCell(resPoint._1, resPoint._2, UNIT_TYPE.KNIGHT)
+      if(workingCount < 5 && defendingCount < 5 && COMMON.distance(unit.y,unit.x, resPoint._1, resPoint._2) < shortestDistance){
+        shortestDistance = COMMON.distance(unit.y,unit.x, resPoint._1, resPoint._2)
+        retPoint = resPoint
+      }
+    }
+    retPoint
+
   }
 }

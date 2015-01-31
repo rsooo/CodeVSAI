@@ -12,6 +12,7 @@ object UNIT_TYPE{
   case object CASTLE extends UNIT_TYPE(4, 10, 9999999)
   case object SETTLEMENT extends UNIT_TYPE(5, 10, 100)
   case object BARRACK extends UNIT_TYPE(6, 4, 500)
+  case object ALL extends  UNIT_TYPE(99,0,999999)
 
   def getUnitType(n : Int) = {
     n match  {

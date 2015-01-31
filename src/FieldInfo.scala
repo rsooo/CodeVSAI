@@ -22,6 +22,8 @@ class FieldInfo {
   var resNum = 0;
   var resSet = scala.collection.mutable.Set[(Int, Int)]()
 
+  var explolerRequired = true
+
   //var attackingArmyNum = 50
 
 //  var myBarrackNum : Int = 0
@@ -41,7 +43,7 @@ class FieldInfo {
   def countUnitGoingToCell(_y : Int, _x : Int, unitType : UNIT_TYPE) = {
     cells(_y)(_x).myUnitsGoing.count(id =>
       myUnitMap.get(id) match {
-        case Some(u) if u.unitType == unitType => true
+        case Some(u) if u.unitType  == unitType || u.unitType == UNIT_TYPE.ALL => true
         case _ => false
       }
     )
@@ -61,5 +63,25 @@ class FieldInfo {
 
   def isInrange(point : (Int, Int)) : Boolean = {
     point._1 >= 0 && point._1 < 100 && point._2 >= 0 && point._2 < 100
+  }
+
+  def recordSight(y : Int, x : Int) = {
+    for(around <- COMMON.Around){
+      if(isInrange(y + around._1, x + around._2)){
+        cells(y + around._1)(x + around._2).see = true
+      }
+    }
+  }
+
+  def getSightNum = {
+    var sightnum = 0
+    for(i <- 0 to 99){
+      for(j <- 0 to 99){
+        if(cells(i)(j).see){
+          sightnum = sightnum + 1
+        }
+      }
+    }
+    sightnum
   }
 }
